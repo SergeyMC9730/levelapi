@@ -11,7 +11,7 @@
 - **More features soon!**
 
 # API
-**Documentation for Level API avaliable here:** [click!](https://sergeymc9730.github.io/levelapi/#/)
+**Documentation for Level API available here:** [click!](https://sergeymc9730.github.io/levelapi/#/)
 
 # Demo server
 

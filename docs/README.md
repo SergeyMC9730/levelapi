@@ -15,7 +15,7 @@ Source code is avaliable **on GitHub**: [click!](https://github.com/SergeyMC9730
 - **More features soon!**
 
 # API
-**Documentation for Level API avaliable here:** [click!](/api/)
+**Documentation for Level API available here:** [click!](/api/)
 
 # Demo server
 
