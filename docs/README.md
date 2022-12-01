@@ -5,7 +5,7 @@
 
 # Source code
 
-Source code is avaliable **on GitHub**: [click!](https://github.com/SergeyMC9730/levelapi)
+Source code is available **on GitHub**: [click!](https://github.com/SergeyMC9730/levelapi)
 
 # Features
 - Recording level data in `.gmd2` format
