@@ -1,6 +1,6 @@
 # Level API
 
-**Level API** - project, I started working on in Juny 2022 **for storing levels and accessing them easilly**
+**Level API** - project, I started working on in June 2022 **for storing levels and accessing them easily**
 <br>
 
 # Features
