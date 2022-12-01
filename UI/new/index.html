@@ -1,0 +1,112 @@
+<html>
+
+<head>
+    <title>Level Downloader</title>
+    <style>
+        * {
+            /* box-sizing: border-box; */
+            align-items: center;
+            color: white;
+        }
+
+        a {
+            color: white;
+            text-shadow: 3px 3px rgb(0, 0, 0);
+            font-size: 5vw;
+        }
+
+        decltitle {
+            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            background-image: linear-gradient(rgb(192, 154, 12), rgb(255, 208, 31));
+            /* text-shadow: 3px 3px rgb(0, 0, 0); */
+            font-size: 4vw;
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50vw;
+        }
+
+
+        body {
+            font-family: "pusab";
+            src: url("pusab.otf") format("truetype");
+            font-style: normal;
+            font-weight: normal;
+            text-align: center;
+            -webkit-text-stroke: 0.10vw black;
+            background: linear-gradient(rgb(46, 177, 253), rgb(46, 112, 253));
+            background-attachment: fixed;
+        }
+
+        .FLAlertLayer {
+            display: inline-block;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            flex-wrap: wrap;
+            margin: 10px;
+            border: 2.5vw solid transparent;
+            border-radius: 3vh;
+            background-color: #995533;
+            border-image: url("brownbox.png") 10% round;
+            max-width: 100%;
+        }
+
+        .ControlMenu {
+            margin: 6vw;
+        }
+    </style>
+    <script>
+        function showStats() {
+            var id1 = document.getElementById("StatLayer");
+            id1.style.display = (id1.style.display == "none" ? "block" : "none");
+        }
+        function showDownload() {
+            var id1 = document.getElementById("DownloadLayer");
+            id1.style.display = (id1.style.display == "none" ? "block" : "none");
+        }
+        function showUpload() {
+            var id1 = document.getElementById("UploadLayer");
+            id1.style.display = (id1.style.display == "none" ? "block" : "none");
+        }
+    </script>
+</head>
+
+<body>
+    <header>
+        <!-- <h1>GMD Level Downloader
+                <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&
+                <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Uploader
+            </h1> -->
+        <img src="ldu.png" alt="GMD Level Downloader & Uploader">
+    </header>
+
+    <a href="#" onclick="showStats()">Statictics</a>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<a href="#"
+        onclick="showDownload()">Download</a>&emsp;&e   msp;&emsp;&emsp;&emsp;&emsp;<a href="#"
+        onclick="showUpload()">Upload</a>
+    <br>
+
+    <br>
+    <div class="ControlMenu"></div>
+    <div id="StatLayer" tag="123">
+        <div class="FLAlertLayer">
+            <decltitle>Statictics</decltitle>
+        </div>
+    </div>
+    <div id="DownloadLayer">
+        <div class="FLAlertLayer">
+            <decltitle>Download</decltitle>
+        </div>
+    </div>
+    <div id="UploadLayer">
+        <div class="FLAlertLayer">
+            <decltitle>Upload</decltitle>
+        </div>
+    </div>
+</body>
+
+</html>

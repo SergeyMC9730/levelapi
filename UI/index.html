@@ -1,0 +1,202 @@
+<html>
+
+<head>
+    <script>
+        function checkForm(el) {
+
+            var idadress = document.getElementById("nameX").value;
+
+            if (idadress == "") {
+                return true;
+            }
+
+            window.location.href = "https://gd.dogotrigger.xyz/upload/level/" + idadress;
+            window.location.href = "https://gd.dogotrigger.xyz/download/" + idadress + ".gmd2";
+
+            return false;
+        }
+    </script>
+    <title>GD Level Downloader</title>
+    <style>
+        /*Обнуление*/
+        * {
+            padding: 0;
+            margin: 0;
+            border: 0;
+        }
+
+        *,
+        *:before,
+        *:after {
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        :focus,
+        :active {
+            outline: none;
+        }
+
+        a:focus,
+        a:active {
+            outline: none;
+        }
+
+        nav,
+        footer,
+        header,
+        aside {
+            display: block;
+        }
+
+        html,
+        body {
+
+            width: 100%;
+        }
+
+        input,
+        button,
+        textarea {
+            font-family: inherit;
+        }
+
+        input::-ms-clear {
+            display: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button::-moz-focus-inner {
+            padding: 0;
+            border: 0;
+        }
+
+        a,
+        a:visited {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        ul li {
+            list-style: none;
+        }
+
+        img {
+            vertical-align: top;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-size: inherit;
+            font-weight: 400;
+        }
+
+
+        @font-face {
+            font-family: "pusab";
+            src: url("pusab.otf") format("truetype");
+            font-style: normal;
+            font-weight: normal;
+        }
+
+        body {
+            background-image: linear-gradient(#0065fd, #002e73);
+            height: 100vh;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed
+        }
+
+
+        .sus {
+            display: inline-block;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            flex-wrap: wrap;
+            margin: 10px;
+            border: 2.5vh solid transparent;
+            border-radius: 3vh;
+            background-color: #995533;
+            border-image: url('brownbox.png') 10% round;
+            max-width: 100%;
+        }
+
+        .center {
+            text-align: center;
+            padding-top: 20%;
+        }
+
+        .idinput {
+            background-color: #6C3C24;
+            border: 2.5vh solid transparent;
+            border-radius: 20px;
+            font-size: 65px;
+            color: rgb(255, 255, 255);
+            font-family: pusab;
+            text-shadow: 6px 0 1px #000,
+                0 6px 1px #000,
+                -6px 0 1px #000,
+                0 -6px 1px #000;
+        }
+
+        .btn {
+            margin: 20px;
+            padding: 7px;
+            background-color: greenyellow;
+            font-size: 50px;
+            font-family: pusab;
+            color: gold;
+            text-shadow: 0px 0 0px #000,
+                0 3px 1px #000,
+                -3px 0 1px #000,
+                0 -3px 1px #000;
+            border: 5px solid rgb(0, 0, 0);
+            border-radius: 20px;
+
+        }
+
+        .btn:hover {
+            background-color: rgb(217, 255, 160);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="center">
+        <form id="form" onsubmit="return checkForm(this)">
+            <div class="sus">
+                <input class="idinput" type="tel" name="idname" placeholder="Level ID:" id="nameX">
+                <br>
+                <input class="btn" type="submit" name="submit" value="Download">
+            </div>
+        </form>
+    </div>
+
+
+
+    <div class="center">
+        <form id="uploadForm" onsubmit="return uploadLevel(this)">
+            <div class="sus"
+                style="padding-bottom: 0px;border-bottom-width: 34.5px;border-top-width: 34.5px;margin-top: -400px;">
+                <input id="uploadInput" class="idinput" type="tel" name="uinput"
+                    placeholder="Level ID / Account ID / Username">
+                <br><input type="submit" name="s" value="Upload" class="btn">
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

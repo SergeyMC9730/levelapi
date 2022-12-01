@@ -1,0 +1,14 @@
+{
+    "sql": {
+        "host": "example.com",
+        "user": "example",
+        "password": "cool_password",
+        "database": "levelapi"
+    },
+    "server_gateway": {
+        "corsURL": "http://example.com"
+    },
+    "sql_middleware": {
+        "debug": false
+    }
+}
