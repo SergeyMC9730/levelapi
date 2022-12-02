@@ -464,7 +464,7 @@ if (apiService) {
             levelList: respLevels,
         };
 
-        NodeList[requestedNodeInformation.INDEX] = rn;
+        NodeList[requestedNodeInformation.INDEX] = requestedNodeInformation;
         NodeList[requestedNodeInformation.INDEX].gdInstance = null;
         fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
 
@@ -759,7 +759,7 @@ if (apiService) {
         });
         var resp = [200, 1, requestedNodeInformation.queue.commandList, respLevels];
 
-        NodeList[requestedNodeInformation.INDEX] = rn;
+        NodeList[requestedNodeInformation.INDEX] = requestedNodeInformation;
         NodeList[requestedNodeInformation.INDEX].gdInstance = null;
         fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
 
