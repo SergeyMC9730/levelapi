@@ -249,7 +249,7 @@ var sched = async (nodeInformation, gdNode) => {
                 node: nodeInformation.node
             }
             latestLevelDownloadd = insr;
-            query(SqlString.format("INSERT INTO meta SET ?", insr));
+            if(!isLevelExists(levelData.id, false, nodeInformation.node)) query(SqlString.format("INSERT INTO meta SET ?", insr));
             console.log("[LevelAPI : %s] .gmd2 file was made!", nodeInformation.node);
         } else {
             console.log("[LevelAPI : %s] ID: %d | Level is not avaliable", nodeInformation.node, i.runState);
@@ -305,7 +305,7 @@ var sched = async (nodeInformation, gdNode) => {
                         node: nodeInformation.node
                     };
                     latestLevelDownloadd = insr;
-                    query(SqlString.format("INSERT INTO meta SET ?", insr));
+                    if(!isLevelExists(somelevel.id, false, nodeInformation.node)) query(SqlString.format("INSERT INTO meta SET ?", insr));
                     console.log("[LevelAPI : %s] .gmd2 file was made!", nodeInformation.node)
                 } else {
                     console.log("[LevelAPI : %s] ID: %d | Level is not avaliable", nodeInformation.node, LLID);
