@@ -125,7 +125,8 @@ var QueueCommandList = {
 var isLevelExists = (id = 0, searchQueue = false, node = "boomlings") => {
     var flag = false;
     if (!searchQueue) {
-        var searchedLevels = query("SELECT * FROM `meta` WHERE `id`=" + id + " AND `node`='" + node + "'");
+        // var searchedLevels = query("SELECT * FROM `meta` WHERE `id`=" + id + " AND `node`='" + node + "'");
+        var searchedLevels = query(`SELECT * FROM meta WHERE id=${id} AND node="${node}"`);
         searchedLevels.forEach((lvl) => {
             //console.log(lvl.id, id, lvl.id == id);
             if (lvl.id == id) flag = true;
@@ -139,7 +140,7 @@ var isLevelExists = (id = 0, searchQueue = false, node = "boomlings") => {
     return flag;
 }
 var findLevel = (id = 0, node = "boomlings") => {
-    var searchedLevels = query("SELECT * FROM `meta` WHERE `id`=" + id + " AND `node`='" + node + "'");
+    var searchedLevels = query(`SELECT * FROM meta WHERE id=${id} AND node="${node}"`);
     return searchedLevels[0];
 }
 var filterLevelList = (ids = [0, 1, 2], node = "boomlings") => {
@@ -151,7 +152,7 @@ var filterLevelList = (ids = [0, 1, 2], node = "boomlings") => {
         str += `id = ${id}${d}`;
         i++;
     });
-    str += "node LIKE '" + node + "'";
+    str += `node="${node}"`;
     // request query
     var searchedLevels = query(str);
     var l2_1 = [];
