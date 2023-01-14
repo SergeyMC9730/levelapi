@@ -219,7 +219,7 @@ var sched = async (nodeInformation, gdNode) => {
         if (somelevel != null) {
             console.log("[LevelAPI : %s] ID: %d | Game Version: %d\n[LevelAPI] Creating .gmd2 file", nodeInformation.node, somelevel.id, somelevel.gameVersion);
             var levelData = await (await somelevel.resolve());
-            var gmdfile = new GMD2.GMD2Implementation(levelData, `${nodeInformation.levelDataLocation}/Level_${i[0]}.gmd2`, false);
+            var gmdfile = new GMD2.GMD2Implementation(levelData, `${nodeInformation.levelDataLocation}/Level_${somelevel.id}.gmd2`, false);
             gmdfile.GenerateFile();
             if (somelevel.creator.accountID == null || somelevel.creator.accountID == 0) {
                 var usr = null;
@@ -345,131 +345,199 @@ String.prototype.isJSON = function () {
 
 getInfo();
 
+var uploadLevelRequest = (node = "", lid = 0, post = false) => {
+    var rn = findNode(node);
+    var resp = {
+        response: 200,
+        query: true,
+        queueLength: rn.queue.commandList.length
+    };
+
+    if (!isLevelExists(parseInt(lid), false, node) && !isLevelExists(parseInt(lid), true, node)) {
+        rn.queue.commandList.push([parseInt(lid), QueueCommandList.COMMAND_RESOLVE_LEVEL]);
+    } else {
+        resp.query = false;
+    }
+    
+    NodeList[rn.INDEX] = rn;
+    NodeList[rn.INDEX] = rn;
+    NodeList[rn.INDEX].gdInstance = null;
+    fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
+
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var uploadLevelBatchRequest = (node = "", lidlist = "0:0", post = false) => {
+    var levels = lidlist.split(":");
+    var lvls2 = [];
+    levels.forEach((lvl) => {
+        lvls2.push(parseInt(lvl));
+    });
+    var requestedNode = node;
+    var rn = findNode(requestedNode);
+    var resp = {
+        response: 200,
+        queue: true,
+        queueLength: rn.queue.commandList.length,
+    };
+    var lvls3 = filterLevelList(lvls2, requestedNode);
+    lvls3.forEach((lvll) => {
+        if (!isLevelExists(parseInt(lvll), true, requestedNode)) {
+            rn.queue.commandList.push([parseInt(lvll), QueueCommandList.COMMAND_RESOLVE_LEVEL]);
+        }
+    });
+
+    NodeList[rn.INDEX] = rn;
+    NodeList[rn.INDEX].gdInstance = null;
+    fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
+
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var uploadUserRequest = async (node = "", user = "", post = false) => {
+    var isAccountID = user.isNumber();
+    var requestedNode = node;
+    var requestedNodeInformation = findNode(requestedNode);
+    if (!isAccountID) {
+        var author = await requestedNodeInformation.gdInstance.users.getByUsername(user, false);
+    } else {
+        var author = await requestedNodeInformation.gdInstance.users.getByAccountID(parseInt(user));
+    }
+    if (!author) {
+        var resp = {
+            response: 404
+        };
+        return (post) ? robtop.convertToRobtop(resp) : resp;
+    }
+    var authorLevels = await author.getLevels(8192);
+    var respLevels = [];
+    var rrr = [];
+    authorLevels.forEach((al) => {
+        rrr.push(al.id);
+    });
+    var rrr2 = filterLevelList(rrr, requestedNode);
+    rrr2.forEach((al) => {
+        if (!isLevelExists(al, true, requestedNode)) {
+            respLevels.push(al);
+            requestedNodeInformation.queue.commandList.push([al, QueueCommandList.COMMAND_RESOLVE_LEVEL]);
+        }
+    });
+    var resp = {
+        response: 200,
+        queue: true,
+        queueSize: requestedNodeInformation.length,
+        levelList: respLevels,
+    };
+
+    NodeList[requestedNodeInformation.INDEX] = requestedNodeInformation;
+    NodeList[requestedNodeInformation.INDEX].gdInstance = null;
+    fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
+
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+
+var downloadLevelRequest = (res, lid, node, post = false) => {
+    var requestedNode = node;
+    var levelID = lid;
+    var resp = {
+        response: 404
+    };
+
+    var requestedNodeInformation = findNode(requestedNode);
+    if (fs.existsSync(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`)) {
+        res.sendFile(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`);
+    } else {
+        resp.inQueue = isLevelExists(parseInt(levelID), true, requestedNodeInformation.node);
+        res.send(resp);
+    }
+}
+
+var searchLevelIDRequest = (node = "", id = 0, post = false) => {
+    var levelID = id;
+    var requestedNode = node;
+    if (isLevelExists(parseInt(levelID), false, requestedNode)) {
+        var leveldata1 = findLevel(parseInt(levelID), requestedNode);
+        var resp = {
+            response: 200,
+            meta: leveldata1
+        };
+        return (post) ? robtop.convertToRobtop(resp) : resp;
+    } else {
+        var resp = {
+            response: 404,
+            inQueue: isLevelExists(parseInt(levelID), true, requestedNode)
+        };
+        return (post) ? robtop.convertToRobtop(resp) : resp;
+    }
+}
+var searchNameRequest = (node = "", lname = "", post = false) => {
+    var levelName = lname;
+    var requestedNode = node;
+    var resp = {
+        response: 200,
+        levels: query("SELECT * FROM meta WHERE name LIKE '%" + levelName + "%' AND `node`='" + requestedNode + "'")
+    };
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var searchNicknameRequest = (node = "", lnickname = "", post = false) => {
+    var nickName = lnickname;
+    var requestedNode = node;
+    var resp = {
+        response: 200,
+        levels: query("SELECT * FROM meta WHERE authorNickname='" + nickName + "' AND `node`='" + requestedNode + "'")
+    };
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var searchDescriptionRequest = (node = "", ldesc = "", post = false) => {
+    var levelDescription = ldesc;
+    var requestedNode = node;
+    var resp = {
+        response: 200,
+        levels: query(SqlString.format("SELECT * FROM meta WHERE description LIKE ? AND `node`=?", ["%" + levelDescription + "%", requestedNode]))
+    };
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var searchGameVersionRequest = (node = "", lgv = "", post = false) => {
+    var requestedNode = node;
+    var gameVersion = parseInt(lgv);
+    var resp = {
+        response: 200,
+        levels: query("SELECT * FROM meta WHERE gameVersion='" + gameVersion + "' AND `node`='" + requestedNode + "'")
+    };
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var searchAccountIDRequest = (node = "", aid = "", post = false) => {
+    var requestedNode = node;
+    var accountID = aid;
+    var resp = {
+        response: 200,
+        levels: query("SELECT * FROM meta WHERE authorAccountID='" + accountID + "' AND `node`='" + requestedNode + "'")
+    };
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+var searchUserIDRequest = (node = "", uid = "", post = false) => {
+    var requestedNode = node;
+    var userID = uid;
+    var resp = {
+        response: 200,
+        levels: query("SELECT * FROM meta WHERE authorUserID='" + userID + "' AND `node`='" + requestedNode + "'")
+    };
+    return (post) ? robtop.convertToRobtop(resp) : resp;
+}
+
 if (apiService) {
     var App = expressJS();
     var port = 8000;
 
     App.get("/api/v1/download/:levelID.:fileFormat", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levelID = req.params.levelID;
-        var resp = {
-            response: 200
-        };
-        var requestedNodeInformation = findNode(requestedNode);
-        if (fs.existsSync(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`) && req.params.fileFormat == "gmd2") {
-            res.sendFile(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`);
-        } else {
-            resp.response = 404;
-            resp.inQueue = isLevelExists(parseInt(levelID), true, requestedNodeInformation.node);
-            res.send(resp);
-        }
-
+        downloadLevelRequest(res, req.params.levelID, "boomlings");
     });
     App.get("/api/v1/upload/level/:levelID", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var rn = findNode(requestedNode);
-        var resp = {
-            response: 200,
-            queue: true,
-            queueLength: rn.queue.commandList.length
-        };
-        if (!isLevelExists(parseInt(req.params.levelID), false, requestedNode) && !isLevelExists(parseInt(req.params.levelID), true, requestedNode)) {
-            rn.queue.commandList.push([parseInt(req.params.levelID), QueueCommandList.COMMAND_RESOLVE_LEVEL]);
-        }
-
-        NodeList[rn.INDEX] = rn;
-        NodeList[rn.INDEX].gdInstance = null;
-        fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
-
-        res.send(resp);
+        res.send(uploadLevelRequest("boomlings", parseInt(req.params.levelID), false));
     });
     App.get("/api/v1/upload/levelbatch/:levelArray", async (req, res) => {
-        var levels = req.params.levelArray.split(":");
-        var lvls2 = [];
-        levels.forEach((lvl) => {
-            lvls2.push(parseInt(lvl));
-        });
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var rn = findNode(requestedNode);
-        var resp = {
-            response: 200,
-            queue: true,
-            queueLength: rn.queue.commandList.length,
-        };
-        var lvls3 = filterLevelList(lvls2, requestedNode);
-        lvls3.forEach((lvll) => {
-            if (!isLevelExists(parseInt(lvll), true, requestedNode)) {
-                rn.queue.commandList.push([parseInt(lvll), QueueCommandList.COMMAND_RESOLVE_LEVEL]);
-            }
-        });
-
-        NodeList[rn.INDEX] = rn;
-        NodeList[rn.INDEX].gdInstance = null;
-        fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
-
-        res.send(resp);
+        res.send(uploadLevelBatchRequest("boomlings", req.params.levelArray, false));
     });
     App.get("/api/v1/upload/user/:userName", async (req, res) => {
-        var isAccountID = req.params.userName.isNumber();
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var requestedNodeInformation = findNode(requestedNode);
-        if (!isAccountID) {
-            var author = await requestedNodeInformation.gdInstance.users.getByUsername(req.params.userName, false);
-        } else {
-            var author = await requestedNodeInformation.gdInstance.users.getByAccountID(parseInt(req.params.userName));
-        }
-        if (!author) {
-            var resp = {
-                response: 404
-            };
-            res.send(resp);
-            return;
-        }
-        var authorLevels = await author.getLevels(8192);
-        var respLevels = [];
-        var rrr = [];
-        authorLevels.forEach((al) => {
-            rrr.push(al.id);
-        });
-        var rrr2 = filterLevelList(rrr, requestedNode);
-        rrr2.forEach((al) => {
-            if (!isLevelExists(al, true, requestedNode)) {
-                respLevels.push(al);
-                requestedNodeInformation.queue.commandList.push([al, QueueCommandList.COMMAND_RESOLVE_LEVEL]);
-            }
-        });
-        var resp = {
-            response: 200,
-            queue: true,
-            queueSize: requestedNodeInformation.length,
-            levelList: respLevels,
-        };
-
-        NodeList[requestedNodeInformation.INDEX] = requestedNodeInformation;
-        NodeList[requestedNodeInformation.INDEX].gdInstance = null;
-        fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
-
-        res.send(resp);
+        res.send(uploadUserRequest("boomlings", req.params.userName, false));
     });
     App.get("/api/v1/stats", async (req, res) => {
         var qSize = 0;
@@ -550,332 +618,60 @@ if (apiService) {
         res.send(resp);
     });
     App.get("/api/v1/search/lid/:levelID", async (req, res) => {
-        var levelID = req.params.levelID;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        if (isLevelExists(parseInt(levelID), false, requestedNode)) {
-            var leveldata1 = findLevel(parseInt(levelID), requestedNode);
-            var resp = {
-                response: 200,
-                meta: leveldata1
-            };
-            res.send(resp);
-            return;
-        } else {
-            var resp = {
-                response: 404,
-                inQueue: isLevelExists(parseInt(levelID), true, requestedNode)
-            };
-            res.send(resp);
-            return;
-        }
+        res.send(searchLevelIDRequest("boomlings", req.params.levelID, false));
     });
     App.get("/api/v1/search/name/:levelName", async (req, res) => {
-        var levelName = req.params.levelName;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var resp = {
-            response: 200,
-            levels: query("SELECT * FROM meta WHERE name LIKE '%" + levelName + "%' AND `node`='" + requestedNode + "'")
-        };
-        res.send(resp);
+        res.send(searchNameRequest("boomlings", req.params.levelName, false));
     });
     App.get("/api/v1/search/nickname/:nickName", async (req, res) => {
-        var nickName = req.params.nickName;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var resp = {
-            response: 200,
-            levels: query("SELECT * FROM meta WHERE authorNickname='" + nickName + "' AND `node`='" + requestedNode + "'")
-        };
-        res.send(resp);
+        res.send(searchNicknameRequest("boomlings", req.params.nickName, false));
     });
     App.get("/api/v1/search/description/:levelDescription", async (req, res) => {
-        var levelDescription = req.params.levelDescription;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var resp = {
-            response: 200,
-            levels: query(SqlString.format("SELECT * FROM meta WHERE description LIKE ? AND `node`=?", ["%" + levelDescription + "%", requestedNode]))
-        };
-        res.send(resp);
+        res.send(searchDescriptionRequest("boomlings", req.params.levelDescription, false));
     });
-
     App.get("/api/v1/search/gameVersion/:gameVersion", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var gameVersion = parseInt(req.params.gameVersion);
-        var resp = {
-            response: 200,
-            levels: query("SELECT * FROM meta WHERE gameVersion='" + gameVersion + "' AND `node`='" + requestedNode + "'")
-        };
-        res.send(resp);
+        res.send(searchGameVersionRequest("boomlings", req.params.gameVersion, false));
     });
     App.get("/api/v1/search/accountID/:accountID", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var accountID = req.params.accountID;
-        var resp = {
-            response: 200,
-            levels: query("SELECT * FROM meta WHERE authorAccountID='" + accountID + "' AND `node`='" + requestedNode + "'")
-        };
-        res.send(resp);
+        res.send(searchAccountIDRequest("boomlings", req.params.accountID, false));
     });
     App.get("/api/v1/search/userID/:userID", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var userID = req.params.userID;
-        var resp = {
-            response: 200,
-            levels: query("SELECT * FROM meta WHERE authorUserID='" + userID + "' AND `node`='" + requestedNode + "'")
-        };
-        res.send(resp);
+        res.send(searchUserIDRequest("boomlings", req.params.userID, false));
     });
 
     // POST
     App.post("/api/v1/download/:levelID.:fileFormat", async (req, res) => {
-        var levelID = req.params.levelID;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var resp = [200];
-        var requestedNodeInformation = findNode(requestedNode);
-        if (fs.existsSync(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`) && req.params.fileFormat == "gmd2") {
-            res.sendFile(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`);
-        } else {
-            resp[1] = isLevelExists(parseInt(levelID), true);
-            res.send(robtop.convertToRobtop(resp));
-        }
-
+        downloadLevelRequest(res, parseInt(req.params.levelID), "boomlings", true);
     });
-    App.post("/api/v1/upload/level/:levelID", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var requestedNodeInformation = findNode(requestedNode);
-        var resp = [200, 1, requestedNodeInformation.queue.commandList.length];
-
-        if (!isLevelExists(parseInt(req.params.levelID), false, requestedNode) && !isLevelExists(parseInt(req.params.levelID), true, requestedNode)) {
-            requestedNodeInformation.queue.commandList.push([parseInt(req.params.levelID), QueueCommandList.COMMAND_RESOLVE_LEVEL]);
-        }
-
-        NodeList[requestedNodeInformation.INDEX] = rn;
-        NodeList[requestedNodeInformation.INDEX].gdInstance = null;
-        fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
-
-        res.send(robtop.convertToRobtop(resp));
-
+    App.get("/api/v1/upload/level/:levelID", async (req, res) => {
+        res.send(uploadLevelRequest("boomlings", parseInt(req.params.levelID), true));
     });
-    App.post("/api/v1/upload/levelbatch/:levelArray", async (req, res) => {
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var requestedNodeInformation = findNode(requestedNode);
-        var resp = [200, 1, requestedNodeInformation.queue.commandList.length];
-        var levels = req.params.levelArray.split(":");
-        var lvls2 = [];
-        levels.forEach((lvl) => {
-            lvls2.push(parseInt(lvl));
-        });
-        var lvls3 = filterLevelList(lvls2, requestedNode);
-        lvls3.forEach((lvll) => {
-            if (!isLevelExists(parseInt(lvll), true, requestedNode)) {
-                requestedNodeInformation.queue.commandList.length.push([parseInt(lvll), QueueCommandList.COMMAND_RESOLVE_LEVEL]);
-            }
-        });
-
-        NodeList[requestedNodeInformation.INDEX] = rn;
-        NodeList[requestedNodeInformation.INDEX].gdInstance = null;
-        fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
-
-        res.send(resp);
+    App.get("/api/v1/upload/levelbatch/:levelArray", async (req, res) => {
+        res.send(uploadLevelBatchRequest("boomlings", req.params.levelArray, true));
     });
-    App.post("/api/v1/upload/user/:userName", async (req, res) => {
-        var isAccountID = req.params.userName.isNumber();
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var requestedNodeInformation = findNode(requestedNode)
-        if (!isAccountID) {
-            var author = await requestedNodeInformation.gdInstance.users.getByUsername(req.params.userName, false);
-        } else {
-            var author = await requestedNodeInformation.gdInstance.users.getByAccountID(parseInt(req.params.userName));
-        }
-        if (!author) {
-            res.send("404");
-            return;
-        }
-        var authorLevels = await requestedNodeInformation.gdInstance.levels.byCreator(author, {}, 8192);
-        var respLevels = [];
-        var rrr = [];
-        authorLevels.forEach((al) => {
-            rrr.push(al.id);
-        });
-        var rrr2 = filterLevelList(rrr, requestedNode);
-        rrr2.forEach((al) => {
-            if (!isLevelExists(al, true, requestedNode)) {
-                respLevels.push(al);
-                requestedNodeInformation.queue.commandList.push([al, QueueCommandList.COMMAND_RESOLVE_LEVEL]);
-            }
-        });
-        var resp = [200, 1, requestedNodeInformation.queue.commandList, respLevels];
-
-        NodeList[requestedNodeInformation.INDEX] = requestedNodeInformation;
-        NodeList[requestedNodeInformation.INDEX].gdInstance = null;
-        fs.writeFileSync("nodes.json", JSON.stringify(NodeList));
-
-        res.send(robtop.convertToRobtop(resp));
+    App.get("/api/v1/upload/user/:userName", async (req, res) => {
+        res.send(uploadUserRequest("boomlings", req.params.userName, true));
     });
-    App.post("/api/v1/search/lid/:levelID", async (req, res) => {
-        var levelID = req.params.levelID;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        if (isLevelExists(parseInt(levelID), false, requestedNode)) {
-            var leveldata1 = findLevel(parseInt(levelID), requestedNode);
-            var resp = [200, convertLevelToArray(leveldata1)];
-            res.send(robtop.convertToRobtop(resp));
-            return;
-        } else {
-            var resp = [404, isLevelExists(parseInt(levelID), true, requestedNode) + 0];
-            res.send(robtop.convertToRobtop(resp));
-            return;
-        }
+    App.get("/api/v1/search/lid/:levelID", async (req, res) => {
+        res.send(searchLevelIDRequest("boomlings", req.params.levelID, true));
     });
-    App.post("/api/v1/search/name/:levelName", async (req, res) => {
-        var levelName = req.params.levelName;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levels = query("SELECT * FROM meta WHERE name LIKE '%" + levelName + "%' AND `node`='" + requestedNode + "'");
-        var lvls = [200];
-        levels.forEach((lvl) => {
-            lvls.push(convertLevelToArray(lvl));
-        });
-        res.send(robtop.convertToRobtop(lvls));
+    App.get("/api/v1/search/name/:levelName", async (req, res) => {
+        res.send(searchNameRequest("boomlings", req.params.levelName, true));
     });
-    App.post("/api/v1/search/nickname/:nickName", async (req, res) => {
-        var nickName = req.params.nickName;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levels = query("SELECT * FROM meta WHERE authorNickname='" + nickName + "' AND `node`='" + requestedNode + "'");
-        var lvls = [200];
-        levels.forEach((lvl) => {
-            lvls.push(convertLevelToArray(lvl));
-        });
-        res.send(robtop.convertToRobtop(lvls));
+    App.get("/api/v1/search/nickname/:nickName", async (req, res) => {
+        res.send(searchNicknameRequest("boomlings", req.params.nickName, true));
     });
-    App.post("/api/v1/search/description/:levelDescription", async (req, res) => {
-        var levelDescription = req.params.levelDescription;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levels = query(SqlString.format("SELECT * FROM meta WHERE description LIKE ? AND `node`=?", ["%" + levelDescription + "%", requestedNode]));
-        var lvls = [200];
-        levels.forEach((lvl) => {
-            lvls.push(convertLevelToArray(lvl));
-        });
-        res.send(robtop.convertToRobtop(lvls));
+    App.get("/api/v1/search/description/:levelDescription", async (req, res) => {
+        res.send(searchDescriptionRequest("boomlings", req.params.levelDescription, true));
     });
-
-    App.post("/api/v1/search/gameVersion/:gameVersion", async (req, res) => {
-        var gameVersion = parseInt(req.params.gameVersion);
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levels = query(SqlString.format("SELECT * FROM meta WHERE gameVersion LIKE ?", ["%" + gameVersion + "%", requestedNode]));
-        var lvls = [200];
-        levels.forEach((lvl) => {
-            lvls.push(convertLevelToArray(lvl));
-        });
-        res.send(robtop.convertToRobtop(lvls));
-
+    App.get("/api/v1/search/gameVersion/:gameVersion", async (req, res) => {
+        res.send(searchGameVersionRequest("boomlings", req.params.gameVersion, true));
     });
-    App.post("/api/v1/search/accountID/:accountID", async (req, res) => {
-        var accountID = req.params.accountID;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levels = query("SELECT * FROM meta WHERE authorAccountID='" + accountID + "' AND `node`='" + requestedNode + "'");
-        var lvls = [200];
-        levels.forEach((lvl) => {
-            lvls.push(convertLevelToArray(lvl));
-        });
-        res.send(robtop.convertToRobtop(lvls));
+    App.get("/api/v1/search/accountID/:accountID", async (req, res) => {
+        res.send(searchAccountIDRequest("boomlings", req.params.accountID, true));
     });
-    App.post("/api/v1/search/userID/:userID", async (req, res) => {
-        var userID = req.params.userID;
-        var requestedNode;
-        if (req.query.node) {
-            requestedNode = req.query.node;
-        } else {
-            requestedNode = "boomlings";
-        }
-        var levels = query("SELECT * FROM meta WHERE authorUserID='" + userID + "' AND `node`='" + requestedNode + "'");
-        var lvls = [200];
-        levels.forEach((lvl) => {
-            lvls.push(convertLevelToArray(lvl));
-        });
-        res.send(robtop.convertToRobtop(lvls));
+    App.get("/api/v1/search/userID/:userID", async (req, res) => {
+        res.send(searchUserIDRequest("boomlings", req.params.userID, true));
     });
 
     App.listen(port, () => {
