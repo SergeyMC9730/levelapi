@@ -446,7 +446,7 @@ var downloadLevelRequest = (res, lid, node, post = false) => {
         res.sendFile(__dirname + `/${requestedNodeInformation.levelDataLocation}/Level_${levelID}.gmd2`);
     } else {
         resp.inQueue = isLevelExists(parseInt(levelID), true, requestedNodeInformation.node);
-        res.send(resp);
+        res.send((post) ? robtop.convertToRobtop(resp) : resp);
     }
 }
 
